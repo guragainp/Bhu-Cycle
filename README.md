@@ -4,7 +4,7 @@
 
 Built for the 2026 NASA Space Apps Challenge, *Field Shift: Adapting Farms with NASA Data*.
 
-**Live site:** https://guragainp.github.io/bhu-cycle/
+**Live site:** https://guragainp.github.io/Bhu-Cycle/
 
 ## What it does
 
