@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<!--
+  Bhu Cycle
+  Built for the 2026 NASA Space Apps Challenge, "Field Shift: Adapting Farms with NASA Data"
+
+  AI disclosure: the code in this file was written with AI assistance (Claude, by Anthropic).
+  The concept, feature decisions and design direction are the team's own.
+
+  Data sources:
+    - NASA POWER Daily API and Climatology API (power.larc.nasa.gov): temperature, rainfall, soil wetness
+    - USDA NRCS soil survey of Logan County, Illinois: local soil type (written into this file, not fetched live)
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Bhu Cycle is better decision-making support for our farmers, showing how each crop shapes the next with NASA Earth data. Code written with AI assistance.">
+<meta name="generator" content="Code written with AI assistance (Claude, Anthropic)">
+<title>Bhu Cycle: how each crop shapes the next</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-display: "Libre Baskerville", Georgia, serif;
+    --font-body: "DM Sans", system-ui, sans-serif;
+
+    --parchment: #F3EBDD;
+    --paper: #FBF6EC;
+    --sand: #E3D6C0;
+    --clay: #C9A27E;
+    --terracotta: #B05F3A;
+    --terracotta-dark: #8F4A2B;
+    --sage: #7D8B6A;
+    --sage-dark: #5C6A4C;
+    --rain: #6E8C92;
+    --espresso: #3A2E25;
+    --bark: #6F5F50;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--parchment);
+    color: var(--espresso);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.55;
+  }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.2; margin: 0; text-wrap: balance; }
+  p { margin: 0; }
+  button, input { font: inherit; color: inherit; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 22px; }
+
+  header.site { padding: 22px 0; border-bottom: 1px solid var(--sand); }
+  .brand { font-family: var(--font-display); font-weight: 700; font-size: 20px; letter-spacing: .01em; }
+  .brand span { color: var(--terracotta); }
+
+  /* Screen 1: location */
+  #screen-location { padding: 9vh 0 60px; }
+  .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--sage-dark); margin-bottom: 14px; }
+  #screen-location h1 { font-size: clamp(34px, 6vw, 52px); max-width: 15ch; }
+  .about { font-family: var(--font-display); font-style: italic; font-size: 18px; color: var(--terracotta-dark); max-width: 46ch; margin-bottom: 26px; }
+  .about strong { font-style: normal; }
+  .lede { font-size: 19px; color: var(--bark); max-width: 46ch; margin-top: 18px; }
+
+  .card { background: var(--paper); border: 1px solid var(--sand); border-radius: 14px; padding: 24px; }
+  .locate { margin-top: 36px; max-width: 560px; }
+  label { display: block; font-weight: 700; margin-bottom: 8px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  input[type=text] {
+    flex: 1 1 220px; min-width: 0;
+    padding: 14px 16px; font-size: 18px;
+    background: #fff; border: 1.5px solid var(--clay); border-radius: 10px;
+  }
+  .btn {
+    padding: 14px 22px; font-weight: 700; font-size: 17px; cursor: pointer;
+    background: var(--terracotta); color: #fff; border: 0; border-radius: 10px;
+  }
+  .btn:hover { background: var(--terracotta-dark); }
+  .btn.quiet { background: transparent; color: var(--terracotta-dark); border: 1.5px solid var(--clay); }
+  .btn.quiet:hover { background: var(--sand); }
+  .btn:disabled { opacity: .55; cursor: wait; }
+  :focus-visible { outline: 3px solid var(--sage); outline-offset: 2px; }
+  .hint { margin-top: 12px; font-size: 15px; color: var(--bark); }
+  .status { margin-top: 12px; font-size: 15px; color: var(--bark); }
+  .status:empty { display: none; }
+  .status.error { color: #8A2F1D; font-weight: 500; }
+
+  /* Screen 2: conditions */
+  #screen-conditions { padding: 40px 0 60px; }
+  .place-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+  .place-head h1 { font-size: clamp(28px, 5vw, 40px); }
+  .coords { color: var(--bark); font-size: 15px; margin-top: 6px; }
+  .section { margin-top: 32px; }
+  .section h2 { font-size: 22px; margin-bottom: 6px; }
+  .section .sub { color: var(--bark); font-size: 15px; margin-bottom: 16px; }
+
+  /* condition groups */
+  .groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .group { background: var(--paper); border: 1px solid var(--sand); border-radius: 14px; padding: 20px; }
+  .group-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin-bottom: 14px; }
+  .group h3 { font-size: 20px; }
+  .tag { font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--sand); color: var(--espresso); white-space: nowrap; }
+  .tag.dry, .tag.warm { background: #EBCDBB; color: #6E3219; }
+  .tag.wet, .tag.cool { background: #CFDDE0; color: #2F4A50; }
+  .tag.ok { background: #D9E0CC; color: #3D4A30; }
+  .group dl { margin: 0; display: grid; gap: 8px; }
+  .group dl div { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; border-bottom: 1px dashed var(--sand); padding-bottom: 8px; }
+  .group dt { color: var(--bark); font-size: 15px; }
+  .group dd { margin: 0; font-weight: 700; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .group .desc { margin-top: 12px; font-size: 15px; color: var(--bark); }
+
+  /* crop choices */
+  .crops { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .crop {
+    background: var(--paper); border: 1.5px solid var(--sand); border-radius: 14px;
+    padding: 16px 10px 14px; cursor: pointer; text-align: center;
+  }
+  .crop:hover { border-color: var(--terracotta); background: #fff; }
+  .crop svg { width: 64px; height: 64px; display: block; margin: 0 auto 8px; }
+  .crop b { display: block; font-size: 16px; }
+  .crop small { color: var(--bark); font-size: 13px; }
+
+  /* popup */
+  dialog {
+    border: 1px solid var(--sand); border-radius: 16px; padding: 0;
+    background: var(--paper); color: var(--espresso);
+    width: min(560px, calc(100vw - 28px)); max-height: calc(100vh - 28px);
+  }
+  dialog::backdrop { background: rgba(58, 46, 37, .55); }
+  .dlg { padding: 24px; }
+  .dlg-head { display: flex; gap: 14px; align-items: center; }
+  .dlg-head svg { width: 60px; height: 60px; flex: none; }
+  .dlg-head h2 { font-size: 24px; }
+  .dlg-head small { color: var(--sage-dark); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; }
+  .dlg .summary { margin: 16px 0; font-size: 17px; }
+  .effects { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .effects li { display: grid; grid-template-columns: 118px 1fr; gap: 12px; align-items: start; background: #fff; border: 1px solid var(--sand); border-radius: 10px; padding: 10px 12px; }
+  .effects .what { font-weight: 700; font-size: 15px; }
+  .effects .how { font-size: 15px; }
+  .effects .mark { display: inline-block; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; margin-right: 6px; }
+  .mark.good { background: #D9E0CC; color: #3D4A30; }
+  .mark.cost { background: #EBCDBB; color: #6E3219; }
+  .mark.same { background: var(--sand); color: var(--espresso); }
+  .dlg-foot { margin-top: 18px; text-align: right; }
+
+  .connect { display: flex; align-items: center; gap: 18px; }
+  .connect svg { width: 64px; height: 64px; flex: none; }
+  .connect h2 { font-size: 22px; margin-bottom: 4px; }
+  .connect p { color: var(--bark); }
+
+  /* start button and planning screen */
+  .start { margin-top: 32px; text-align: center; }
+  .btn.big { font-size: 20px; padding: 18px 34px; }
+  #screen-plan { padding: 40px 0 60px; }
+  .seasons { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .season { background: var(--paper); border: 1.5px solid var(--sand); border-radius: 14px; padding: 18px 12px; cursor: pointer; text-align: center; }
+  .season:hover { border-color: var(--terracotta); }
+  .season b { display: block; font-family: var(--font-display); font-size: 20px; }
+  .season small { color: var(--bark); font-size: 14px; }
+  .season[aria-pressed="true"] { background: var(--terracotta); border-color: var(--terracotta); color: #fff; }
+  .season[aria-pressed="true"] small { color: #F6E3D8; }
+  .recs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .recs li { display: flex; gap: 14px; align-items: center; background: var(--paper); border: 1px solid var(--sand); border-radius: 14px; padding: 14px 16px; }
+  .recs svg { width: 52px; height: 52px; flex: none; }
+  .recs b { font-size: 17px; }
+  .recs .when { font-weight: 700; color: var(--sage-dark); }
+  .recs p { font-size: 15px; color: var(--bark); }
+  .picks { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .pick { width: 100%; text-align: left; cursor: pointer; display: flex; gap: 14px; align-items: center; background: var(--paper); border: 1.5px solid var(--sand); border-radius: 14px; padding: 14px 16px; }
+  .pick:hover { border-color: var(--terracotta); background: #fff; }
+  .pick svg { width: 52px; height: 52px; flex: none; }
+  .pick .body { flex: 1; }
+  .pick b { font-size: 17px; }
+  .pick .when { font-weight: 700; color: var(--sage-dark); }
+  .pick p { font-size: 15px; color: var(--bark); }
+  .pick .tag { flex: none; }
+  .tag.good { background: #D9E0CC; color: #3D4A30; }
+  .tag.cost { background: #EBCDBB; color: #6E3219; }
+  .crop[aria-pressed="true"] { background: var(--terracotta); border-color: var(--terracotta); color: #fff; }
+  .crop[aria-pressed="true"] small { color: #F6E3D8; }
+  .recs .amount { font-family: var(--font-display); font-size: 22px; color: var(--espresso); }
+  .empty { color: var(--bark); }
+  select { font: inherit; color: inherit; padding: 14px 12px; font-size: 18px; background: #fff; border: 1.5px solid var(--clay); border-radius: 10px; }
+  input[type=number] { flex: 1 1 140px; min-width: 0; padding: 14px 16px; font-size: 18px; background: #fff; border: 1.5px solid var(--clay); border-radius: 10px; }
+  .plot { max-width: 560px; }
+
+  footer.site { border-top: 1px solid var(--sand); padding: 22px 0 40px; font-size: 14px; color: var(--bark); }
+  footer.site a { color: var(--terracotta-dark); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap"><div class="brand">Bhu <span>Cycle</span></div></div>
+</header>
+
+<main class="wrap">
+
+  <!-- Screen 1: enter your location -->
+  <section id="screen-location">
+    <p class="eyebrow">Better decision-making support for our farmers</p>
+    <p class="about"><strong>Bhu</strong> means earth and soil. Bhu Cycle shows how each crop shapes the next.</p>
+    <h1>Where is your farm?</h1>
+    <p class="lede">Enter your location. Bhu Cycle reads NASA data for your area and shows how different crops would change your soil.</p>
+
+    <div class="card locate">
+      <form id="location-form">
+        <label for="place">Your location</label>
+        <div class="row">
+          <input type="text" id="place" name="place" value="Lincoln, Illinois" autocomplete="off" required>
+          <button class="btn" type="submit" id="go-btn">Show my conditions</button>
+        </div>
+      </form>
+      <p class="hint">Bhu Cycle is starting with Lincoln, Illinois.</p>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- Screen 2: current conditions and crop choices -->
+  <section id="screen-conditions" hidden>
+    <div class="place-head">
+      <div>
+        <p class="eyebrow">Current conditions</p>
+        <h1 id="place-name"></h1>
+        <p class="coords" id="place-sub"></p>
+      </div>
+      <button class="btn quiet" type="button" id="change-btn">Change location</button>
+    </div>
+
+    <div class="section">
+      <div class="groups" id="groups"></div>
+    </div>
+
+    <div class="section">
+      <h2>Choose a crop</h2>
+      <p class="sub">Tap a crop to see what it would do to your soil.</p>
+      <div class="crops" id="crops"></div>
+    </div>
+
+    <div class="section">
+      <div class="card connect">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="17" cy="25" r="7" fill="#7D8B6A"/><path d="M5 51c0-9 5-14 12-14s12 5 12 14z" fill="#7D8B6A"/>
+          <circle cx="47" cy="25" r="7" fill="#5C6A4C"/><path d="M35 51c0-9 5-14 12-14s12 5 12 14z" fill="#5C6A4C"/>
+          <circle cx="32" cy="21" r="9" fill="#B05F3A" stroke="#FBF6EC" stroke-width="2.5"/><path d="M16 56c0-12 6-18 16-18s16 6 16 18z" fill="#B05F3A" stroke="#FBF6EC" stroke-width="2.5" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <h2>Connect with other farmers nearby</h2>
+          <p>See what your neighbors are farming.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="start">
+      <button class="btn big" type="button" id="start-btn">Let's start farming</button>
+    </div>
+
+  </section>
+
+  <!-- Screen 3: season, recommended crops, plot size, seed estimate -->
+  <section id="screen-plan" hidden>
+    <div class="place-head">
+      <div>
+        <p class="eyebrow">Let's start farming</p>
+        <h1>Plan your next crop</h1>
+      </div>
+      <button class="btn quiet" type="button" id="back-btn">Back to conditions</button>
+    </div>
+
+    <div class="section">
+      <h2>When did you sow your last crop?</h2>
+      <p class="sub">Choose a season.</p>
+      <div class="seasons" id="sown-seasons"></div>
+    </div>
+
+    <div class="section" id="last-section" hidden>
+      <h2>What crop?</h2>
+      <p class="sub">The last crop changes what the soil can offer the next one.</p>
+      <div class="crops" id="last-crops"></div>
+    </div>
+
+    <div class="section" id="season-section" hidden>
+      <h2>When do you want to plant?</h2>
+      <p class="sub">Choose a season.</p>
+      <div class="seasons" id="seasons"></div>
+    </div>
+
+    <div class="section" id="recs-section" hidden>
+      <h2 id="recs-title"></h2>
+      <p class="sub" id="recs-sub"></p>
+      <ul class="picks" id="recs"></ul>
+    </div>
+
+    <div class="section" id="plot-section" hidden>
+      <h2>What is the size of your plot?</h2>
+      <p class="sub">Bhu Cycle will estimate how much seed each recommended crop needs.</p>
+      <form class="card plot" id="plot-form">
+        <label for="plot-size">Plot size</label>
+        <div class="row">
+          <input type="number" id="plot-size" min="0" step="any" inputmode="decimal" required>
+          <select id="plot-unit" aria-label="Unit"><option value="acre">acres</option><option value="sqft">square feet</option></select>
+          <button class="btn" type="submit">Calculate</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="section" id="seed-section" hidden>
+      <h2 id="seed-title"></h2>
+      <p class="sub">Estimates from typical planting rates. Seed labels and local advisers give the exact rate.</p>
+      <ul class="recs" id="seed-list"></ul>
+    </div>
+  </section>
+
+</main>
+
+<dialog id="crop-dialog" aria-labelledby="dlg-title">
+  <div class="dlg">
+    <div class="dlg-head">
+      <span id="dlg-icon"></span>
+      <div><small id="dlg-type"></small><h2 id="dlg-title"></h2></div>
+    </div>
+    <p class="summary" id="dlg-summary"></p>
+    <ul class="effects" id="dlg-effects"></ul>
+    <div class="dlg-foot"><button class="btn" type="button" id="dlg-close">Close</button></div>
+  </div>
+</dialog>
+
+<footer class="site">
+  <div class="wrap">
+    Weather and soil wetness: <a href="https://power.larc.nasa.gov/">NASA POWER</a>. Soil type: USDA NRCS soil survey.
+    The code for this tool was written with AI assistance. Bhu Cycle supports, and does not replace, farmer judgment and local expertise.
+  </div>
+</footer>
+
+<script>
+"use strict";
+
+/* ---------- The one location covered for now ---------- */
+var PLACE = {
+  name: "Lincoln, Illinois",
+  match: /lincoln/i,
+  lat: 40.1484,
+  lon: -89.3648,
+  soilType: "Prairie silt loam",
+  soilDesc: "Dark, fertile prairie soil, typical of Logan County. Holds water well and drains slowly on flat ground."
+};
+
+/* ---------- Crops and what they do to the soil ---------- */
+// mark: "good" builds or protects the soil, "cost" draws it down, "same" is little change
+var CROPS = [
+  { id: "corn", name: "Corn", type: "Grain crop",
+    summary: "A heavy feeder. It takes a lot of nitrogen but leaves plenty of stalks behind.",
+    effects: [
+      ["Nitrogen", "cost", "Uses", "Takes more nitrogen than any other crop here."],
+      ["Organic matter", "good", "Adds", "Stalks and roots return a lot of residue."],
+      ["Soil cover", "same", "Some", "Residue protects the soil if left on the field."],
+      ["Soil structure", "same", "Little change", "Does not loosen compacted layers."],
+      ["Water", "cost", "High use", "Needs the most water in July and August."]
+    ] },
+  { id: "soy", name: "Soybean", type: "Legume",
+    summary: "Makes much of its own nitrogen and leaves a little for the next crop.",
+    effects: [
+      ["Nitrogen", "good", "Adds", "Leaves a small credit for the crop that follows."],
+      ["Organic matter", "cost", "Low", "Leaves little residue behind."],
+      ["Soil cover", "cost", "Exposed", "Soil is nearly bare after harvest."],
+      ["Soil structure", "same", "Little change", "Roots are shallow and short-lived."],
+      ["Water", "same", "Moderate", "Peak need comes in August."]
+    ] },
+  { id: "wheat", name: "Winter wheat", type: "Small grain",
+    summary: "Planted in fall, it keeps the field green through winter and spring.",
+    effects: [
+      ["Nitrogen", "same", "Moderate", "Needs less than corn."],
+      ["Organic matter", "good", "Adds", "Straw and dense roots feed the soil."],
+      ["Soil cover", "good", "Protects", "Covers the soil from fall to early summer."],
+      ["Soil structure", "good", "Improves", "Fine roots bind and loosen the topsoil."],
+      ["Water", "same", "Moderate", "Grows on winter and spring moisture."]
+    ] },
+  { id: "alfalfa", name: "Alfalfa", type: "Perennial legume",
+    summary: "Stays in the field for several years. Its deep roots rebuild the soil.",
+    effects: [
+      ["Nitrogen", "good", "Adds", "Fixes a large amount for later crops."],
+      ["Organic matter", "good", "Adds", "Builds steadily over several years."],
+      ["Soil cover", "good", "Protects", "Covers the soil all year."],
+      ["Soil structure", "good", "Improves", "Taproots break up compacted layers."],
+      ["Water", "cost", "High use", "Can dry out deep soil."]
+    ] },
+  { id: "rye", name: "Cereal rye", type: "Cover crop",
+    summary: "Sown after harvest, it survives winter and protects the field until spring.",
+    effects: [
+      ["Nitrogen", "same", "Holds", "Catches leftover nitrogen, but can tie it up in spring."],
+      ["Organic matter", "good", "Adds", "Produces a lot of growth by spring."],
+      ["Soil cover", "good", "Protects", "Covers the soil all winter."],
+      ["Soil structure", "good", "Improves", "Dense roots hold the soil together."],
+      ["Water", "same", "Moderate", "Uses some spring moisture before planting."]
+    ] },
+  { id: "clover", name: "Red clover", type: "Legume cover crop",
+    summary: "Often seeded into wheat. It feeds the soil after the wheat comes off.",
+    effects: [
+      ["Nitrogen", "good", "Adds", "Fixes nitrogen for the next crop."],
+      ["Organic matter", "good", "Adds", "Leafy growth breaks down quickly."],
+      ["Soil cover", "good", "Protects", "Covers the soil after wheat harvest."],
+      ["Soil structure", "good", "Improves", "Taproot loosens the topsoil."],
+      ["Water", "same", "Moderate", "Uses summer moisture after wheat."]
+    ] },
+  { id: "radish", name: "Radish", type: "Cover crop",
+    summary: "A fast fall cover with a thick taproot that drills into tight soil.",
+    effects: [
+      ["Nitrogen", "same", "Holds", "Takes up leftover nitrogen and releases it in early spring."],
+      ["Organic matter", "same", "Small", "Breaks down fast after winter."],
+      ["Soil cover", "same", "Fall only", "Dies in winter, leaving soil open by spring."],
+      ["Soil structure", "good", "Improves", "Taproot opens compacted layers."],
+      ["Water", "good", "Helps", "Root channels let water soak in."]
+    ] },
+  { id: "sorghum", name: "Sorghum", type: "Grain crop",
+    summary: "A grain that tolerates heat and drought, and needs less water than corn.",
+    effects: [
+      ["Nitrogen", "cost", "Uses", "A heavy feeder, though less than corn."],
+      ["Organic matter", "good", "Adds", "Leaves heavy residue."],
+      ["Soil cover", "same", "Some", "Residue protects the soil if left on the field."],
+      ["Soil structure", "same", "Little change", "Does not loosen compacted layers."],
+      ["Water", "good", "Low use", "Copes with dry spells better than corn."]
+    ] }
+];
+
+/* ---------- When each crop can be planted, judged against NASA temperature averages (°F) ----------
+   warm:       planting month is at least minT, and the months that follow stay at least growT
+   spring:     planting month is between minT and maxT and warming
+   fall:       planting month is between minT and maxT and cooling (the crop grows through winter)
+   lateSummer: planting month is at least minT and cooling, with two more months above 50 °F */
+var PLANTING = {
+  corn:    [{ kind: "warm", minT: 50, growT: 60, months: 5 }],
+  soy:     [{ kind: "warm", minT: 55, growT: 60, months: 4 }],
+  sorghum: [{ kind: "warm", minT: 60, growT: 60, months: 4 }],
+  wheat:   [{ kind: "fall", minT: 48, maxT: 70 }],
+  rye:     [{ kind: "fall", minT: 36, maxT: 70 }],
+  clover:  [{ kind: "spring", minT: 20, maxT: 60 }],
+  alfalfa: [{ kind: "spring", minT: 45, maxT: 65 }, { kind: "lateSummer", minT: 65 }],
+  radish:  [{ kind: "lateSummer", minT: 65 }]
+};
+
+/* ---------- How much seed each crop needs per acre ---------- */
+var SEEDING = {
+  corn:    { rate: 34000,   unit: "seeds",  how: "Rows 30 inches apart, one seed about every 6 inches." },
+  soy:     { rate: 140000,  unit: "seeds",  how: "Rows 15 inches apart, one seed about every 3 inches." },
+  sorghum: { rate: 80000,   unit: "seeds",  how: "Rows 30 inches apart, one seed about every 2.5 inches." },
+  wheat:   { rate: 1500000, unit: "seeds",  how: "Drilled in rows 7.5 inches apart." },
+  alfalfa: { rate: 15,      unit: "pounds", how: "Tiny seed, sold by weight. Drilled shallow." },
+  rye:     { rate: 60,      unit: "pounds", how: "Sold by weight. Drilled in rows 7.5 inches apart." },
+  clover:  { rate: 12,      unit: "pounds", how: "Tiny seed, sold by weight. Often spread over wheat in late winter." },
+  radish:  { rate: 6,       unit: "pounds", how: "Sold by weight. Drilled in rows 7.5 inches apart." }
+};
+
+/* ---------- How long each crop grows and roughly how much water it uses in that time (inches) ---------- */
+var GROW = {
+  corn: { months: 5, need: 22 }, soy: { months: 4, need: 20 }, sorghum: { months: 4, need: 18 },
+  wheat: { months: 10, need: 18 }, rye: { months: 7, need: 8 }, clover: { months: 6, need: 12 },
+  alfalfa: { months: 5, need: 24 }, radish: { months: 3, need: 6 }
+};
+
+/* ---------- What each crop does to this soil ---------- */
+var SOIL_OUTCOME = {
+  corn:    ["same", "Nitrogen is drawn down, and the stalks add organic matter."],
+  soy:     ["same", "A little nitrogen is added, but the soil is left nearly bare after harvest."],
+  wheat:   ["good", "The soil stays covered from fall to early summer, and roots loosen the topsoil."],
+  alfalfa: ["good", "Nitrogen and organic matter build up over several years. Wet, low spots in this slow-draining soil can kill the stand."],
+  rye:     ["good", "The soil is covered all winter, and leftover nitrogen is held in the field."],
+  clover:  ["good", "Nitrogen is added for the next crop, and the soil stays covered."],
+  radish:  ["good", "Compacted layers are opened up. The soil is bare again by spring."],
+  sorghum: ["same", "Nitrogen is drawn down, and heavy residue is left behind."]
+};
+
+/* ---------- How the last crop affects the next one ---------- */
+var LEGUME = { soy: "a small amount of", clover: "a good amount of", alfalfa: "a large amount of" };
+var SAME_CROP = {
+  corn: "Corn after corn lets rootworm and leaf diseases carry over, and yields usually drop.",
+  soy: "Soybean after soybean lets cyst nematode and root diseases build up.",
+  wheat: "Wheat after wheat lets diseases that live on wheat stubble carry over.",
+  alfalfa: "New alfalfa seeded after old alfalfa often fails. The old plants leave a substance that harms seedlings.",
+  sorghum: "Sorghum after sorghum lets its diseases carry over and leaves nitrogen low."
+};
+
+var SEASONS = [
+  { id: "spring", name: "Spring", months: [2, 3, 4] },
+  { id: "summer", name: "Summer", months: [5, 6, 7] },
+  { id: "fall",   name: "Fall",   months: [8, 9, 10] },
+  { id: "winter", name: "Winter", months: [11, 0, 1] }
+];
+
+var ICONS = {
+  corn: '<path d="M32 7c7 0 11 10 11 23s-4 25-11 25-11-12-11-25S25 7 32 7z" fill="#D9A441"/><path d="M26 18h12M23 26h18M23 34h18M24 42h16" stroke="#B8862B" stroke-width="2" stroke-linecap="round"/><path d="M32 9v44" stroke="#B8862B" stroke-width="2"/><path d="M20 32c-7 5-9 14-5 25 9-2 15-8 17-17-5 0-9-3-12-8z" fill="#7D8B6A"/><path d="M44 32c7 5 9 14 5 25-9-2-15-8-17-17 5 0 9-3 12-8z" fill="#5C6A4C"/>',
+  soy: '<path d="M52 12l5-6" stroke="#5C6A4C" stroke-width="3" stroke-linecap="round"/><path d="M9 43c0-9 6-15 13-17 3-8 10-12 17-12 4-4 10-5 14-2 2 7-1 13-6 16-1 7-6 13-14 15-3 6-10 9-17 8-4-1-7-4-7-8z" fill="#8FA070"/><circle cx="20" cy="41" r="6" fill="#C9D3A8"/><circle cx="33" cy="30" r="6" fill="#C9D3A8"/><circle cx="45" cy="20" r="5" fill="#C9D3A8"/>',
+  wheat: '<path d="M32 60V16" stroke="#B8862B" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="32" cy="9" rx="4" ry="7" fill="#D9A441"/><g fill="#D9A441"><ellipse cx="25" cy="20" rx="4" ry="7.5" transform="rotate(-28 25 20)"/><ellipse cx="39" cy="20" rx="4" ry="7.5" transform="rotate(28 39 20)"/><ellipse cx="25" cy="31" rx="4" ry="7.5" transform="rotate(-28 25 31)"/><ellipse cx="39" cy="31" rx="4" ry="7.5" transform="rotate(28 39 31)"/><ellipse cx="25" cy="42" rx="4" ry="7.5" transform="rotate(-28 25 42)"/><ellipse cx="39" cy="42" rx="4" ry="7.5" transform="rotate(28 39 42)"/></g>',
+  alfalfa: '<path d="M32 60V22" stroke="#5C6A4C" stroke-width="2.5" stroke-linecap="round"/><g fill="#7D8B6A"><ellipse cx="21" cy="44" rx="8" ry="4.5" transform="rotate(25 21 44)"/><ellipse cx="43" cy="44" rx="8" ry="4.5" transform="rotate(-25 43 44)"/><ellipse cx="22" cy="32" rx="7" ry="4" transform="rotate(25 22 32)"/><ellipse cx="42" cy="32" rx="7" ry="4" transform="rotate(-25 42 32)"/></g><g fill="#8C7AA6"><circle cx="32" cy="8" r="4"/><circle cx="27" cy="13" r="4"/><circle cx="37" cy="13" r="4"/><circle cx="29" cy="19" r="4"/><circle cx="35" cy="19" r="4"/></g>',
+  rye: '<g fill="none" stroke-linecap="round" stroke-width="4"><path d="M32 58C30 42 22 30 11 24" stroke="#7D8B6A"/><path d="M32 58C31 40 27 24 23 8" stroke="#5C6A4C"/><path d="M32 58V14" stroke="#7D8B6A"/><path d="M32 58C33 40 37 24 41 8" stroke="#5C6A4C"/><path d="M32 58C34 42 42 30 53 24" stroke="#7D8B6A"/></g><path d="M14 59h36" stroke="#C9A27E" stroke-width="3" stroke-linecap="round"/>',
+  clover: '<path d="M32 34c0 10 2 18 6 26" stroke="#5C6A4C" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="32" cy="17" r="11" fill="#7D8B6A"/><circle cx="20" cy="35" r="11" fill="#7D8B6A"/><circle cx="44" cy="35" r="11" fill="#5C6A4C"/><path d="M27 15l5 5 5-5M15 34l5 5 5-5M39 34l5 5 5-5" stroke="#D9E0CC" stroke-width="2" fill="none" stroke-linecap="round"/>',
+  radish: '<g fill="#7D8B6A"><path d="M32 28C30 17 24 10 15 7c-1 9 4 17 17 21z"/><path d="M32 28c2-11 8-18 17-21 1 9-4 17-17 21z" fill="#5C6A4C"/><path d="M32 28c-4-8-3-17 0-24 3 7 4 16 0 24z"/></g><path d="M32 26c11 0 15 8 13 16-2 9-9 12-12 20h-2c-3-8-10-11-12-20-2-8 2-16 13-16z" fill="#C97B63"/><path d="M26 34c-2 3-2 7 0 10" stroke="#EBCDBB" stroke-width="2.5" fill="none" stroke-linecap="round"/>',
+  sorghum: '<path d="M32 60V30" stroke="#5C6A4C" stroke-width="3" stroke-linecap="round"/><path d="M32 50c-8-1-14-6-17-13M32 44c8-1 14-6 17-13" stroke="#7D8B6A" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="32" cy="19" rx="10" ry="15" fill="#9A4F32"/><g fill="#D9A27E"><circle cx="29" cy="11" r="2"/><circle cx="35" cy="14" r="2"/><circle cx="28" cy="19" r="2"/><circle cx="35" cy="22" r="2"/><circle cx="30" cy="27" r="2"/></g>'
+};
+function icon(id) { return '<svg viewBox="0 0 64 64" aria-hidden="true">' + ICONS[id] + '</svg>'; }
+
+/* ---------- Constants ---------- */
+var MONTH_KEYS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+var MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+var MONTH_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+var DAYS = [31,28.25,31,30,31,30,31,31,30,31,30,31];
+var POWER = "https://power.larc.nasa.gov/api/temporal/";
+var POWER_PARAMS = ["T2M","T2M_MAX","T2M_MIN","PRECTOTCORR","GWETROOT","GWETTOP"];
+
+/* ---------- Data helpers (no page access, so they can be tested alone) ---------- */
+function valid(v) { return typeof v === "number" && v > -900; }
+function c2f(c) { return c === null ? null : c * 9 / 5 + 32; }
+function mm2in(mm) { return mm === null ? null : mm / 25.4; }
+function round(v) { return Math.round(v); }
+function one(v) { return (Math.round(v * 10) / 10).toFixed(1); }
+function sum(a) { return a.reduce(function (s, v) { return s + (v || 0); }, 0); }
+function mean(a) { return a.length ? sum(a) / a.length : null; }
+function maxOf(a) { return Math.max.apply(null, a.filter(function (v) { return v !== null; })); }
+function minOf(a) { return Math.min.apply(null, a.filter(function (v) { return v !== null; })); }
+
+// One NASA POWER climatology parameter as 12 values (Jan..Dec). Missing values become null.
+function monthly(paramObj) {
+  return MONTH_KEYS.map(function (k) {
+    if (!paramObj) return null;
+    var v = paramObj[k];
+    if (v === undefined) v = paramObj[k.toLowerCase()];
+    return valid(v) ? v : null;
+  });
+}
+
+// Long-term monthly averages, converted to °F and inches.
+function parseClimatology(json) {
+  var p = json && json.properties && json.properties.parameter;
+  if (!p) throw new Error("NASA POWER sent a reply this tool could not read.");
+  var units = (json.parameters && json.parameters.PRECTOTCORR && json.parameters.PRECTOTCORR.units) || "mm/day";
+  var perDay = /day/i.test(units);
+  var d = {
+    tavg: monthly(p.T2M).map(c2f),
+    tmax: monthly(p.T2M_MAX).map(c2f),
+    tmin: monthly(p.T2M_MIN).map(c2f),
+    rain: monthly(p.PRECTOTCORR).map(function (v, i) { return v === null ? null : mm2in(perDay ? v * DAYS[i] : v); }),
+    root: monthly(p.GWETROOT),
+    top: monthly(p.GWETTOP)
+  };
+  if (d.tavg.some(function (v) { return v === null; }) || d.rain.some(function (v) { return v === null; })) {
+    throw new Error("NASA POWER has no long-term averages for this spot.");
+  }
+  return d;
+}
+
+// Recent daily readings, oldest first, converted to °F and inches.
+function parseDaily(json) {
+  var p = json && json.properties && json.properties.parameter;
+  if (!p || !p.T2M) throw new Error("NASA POWER sent a reply this tool could not read.");
+  function get(name, key) { var v = p[name] && p[name][key]; return valid(v) ? v : null; }
+  return Object.keys(p.T2M).sort().map(function (key) {
+    return {
+      date: key,
+      tavg: c2f(get("T2M", key)), tmax: c2f(get("T2M_MAX", key)), tmin: c2f(get("T2M_MIN", key)),
+      rain: mm2in(get("PRECTOTCORR", key)),
+      root: get("GWETROOT", key), top: get("GWETTOP", key)
+    };
+  });
+}
+
+function monthOf(key) { return parseInt(key.slice(4, 6), 10) - 1; }
+function niceDate(key) { return MONTH_NAMES[monthOf(key)] + " " + parseInt(key.slice(6, 8), 10); }
+
+// Compares the last 30 days with what is usual for the same time of year.
+// Either input may be null. Returns the three condition groups.
+function buildConditions(days, clim, today, place) {
+  var recent = null;
+  if (days) {
+    var wx = days.filter(function (d) { return d.tavg !== null && d.rain !== null; }).slice(-30);
+    var soilDays = days.filter(function (d) { return d.root !== null; }).slice(-7);
+    if (wx.length >= 10) {
+      var lastTwoWeeks = wx.slice(-14).map(function (d) { return d.tmin; }).filter(function (v) { return v !== null; });
+      recent = {
+        n: wx.length,
+        through: wx[wx.length - 1].date,
+        tavg: mean(wx.map(function (d) { return d.tavg; })),
+        coldest: lastTwoWeeks.length ? Math.min.apply(null, lastTwoWeeks) : null,
+        rain: sum(wx.map(function (d) { return d.rain; })),
+        root: soilDays.length ? mean(soilDays.map(function (d) { return d.root; })) : null,
+        top: soilDays.length ? mean(soilDays.map(function (d) { return d.top; }).filter(function (v) { return v !== null; })) : null,
+        months: wx.map(function (d) { return monthOf(d.date); })
+      };
+    }
+  }
+
+  var usual = null;
+  if (clim) {
+    var months = recent ? recent.months : null;
+    if (months) {
+      usual = {
+        tavg: mean(months.map(function (m) { return clim.tavg[m]; })),
+        rain: sum(months.map(function (m) { return clim.rain[m] / DAYS[m]; })),
+        root: clim.root[months[months.length - 1]]
+      };
+    } else {
+      var m = today.getMonth();
+      usual = { tavg: clim.tavg[m], tmin: clim.tmin[m], rain: clim.rain[m], root: clim.root[m], top: clim.top[m] };
+    }
+  }
+  if (!recent && !usual) throw new Error("NASA POWER did not return any readings. Please try again in a moment.");
+
+  var groups, sub, soilTag = null;
+  if (recent) {
+    sub = "Last " + recent.n + " days, through " + niceDate(recent.through);
+
+    var tempTag = null, rainTag = null;
+    if (usual) {
+      if (recent.root !== null && usual.root !== null) {
+        var ds = recent.root - usual.root;
+        soilTag = ds > 0.08 ? ["wet", "Wetter than usual"] : ds < -0.08 ? ["dry", "Drier than usual"] : ["ok", "About normal"];
+      }
+      var dt = recent.tavg - usual.tavg;
+      tempTag = dt > 3 ? ["warm", "Warmer than usual"] : dt < -3 ? ["cool", "Cooler than usual"] : ["ok", "About normal"];
+      var ratio = usual.rain > 0 ? recent.rain / usual.rain : 1;
+      rainTag = ratio > 1.4 ? ["wet", "Wetter than usual"] : ratio < 0.6 ? ["dry", "Drier than usual"] : ["ok", "About normal"];
+    }
+
+    var soilRows = [];
+    if (recent.root !== null) soilRows.push(["Moisture at root depth", round(recent.root * 100) + "%"]);
+    if (recent.top !== null) soilRows.push(["Moisture at the surface", round(recent.top * 100) + "%"]);
+    soilRows.push(["Soil type", place.soilType]);
+
+    var tempRows = [["Average", round(recent.tavg) + " °F"]];
+    if (usual) tempRows.push(["Usual for this time", round(usual.tavg) + " °F"]);
+    if (recent.coldest !== null) tempRows.push(["Coldest recent night", round(recent.coldest) + " °F"]);
+    var frostLine = recent.coldest === null ? "" : recent.coldest <= 32 ? "Frost has arrived. Tender crops are done for the season." : "No frost in the last two weeks.";
+
+    var rainRows = [["Rain, last " + recent.n + " days", one(recent.rain) + " in"]];
+    if (usual) rainRows.push(["Usual for this time", one(usual.rain) + " in"]);
+    var rainLine = !rainTag ? "" : rainTag[0] === "dry" ? "Less rain than usual. Fields are relying on stored soil water." :
+                   rainTag[0] === "wet" ? "More rain than usual. Watch for runoff on bare ground." : "Rainfall is close to what is expected.";
+
+    groups = [
+      { title: "Soil", tag: soilTag, rows: soilRows, desc: place.soilDesc },
+      { title: "Temperature", tag: tempTag, rows: tempRows, desc: frostLine },
+      { title: "Rain", tag: rainTag, rows: rainRows, desc: rainLine }
+    ];
+  } else {
+    var mName = MONTH_FULL[today.getMonth()];
+    sub = "Usual conditions for " + mName + ". Recent readings were not available.";
+    var typical = ["", "Typical for " + mName];
+    groups = [
+      { title: "Soil", tag: typical, rows: [["Moisture at root depth", usual.root === null ? "n/a" : round(usual.root * 100) + "%"], ["Soil type", place.soilType]], desc: place.soilDesc },
+      { title: "Temperature", tag: typical, rows: [["Average", round(usual.tavg) + " °F"], ["Average night low", round(usual.tmin) + " °F"]], desc: "" },
+      { title: "Rain", tag: typical, rows: [["Rain in the month", one(usual.rain) + " in"]], desc: "" }
+    ];
+  }
+  var soilNow = (recent && recent.root !== null) ? { pct: round(recent.root * 100), tag: (usual && soilTag) ? soilTag[1] : null } : null;
+  return { sub: sub, groups: groups, soilNow: soilNow };
+}
+
+// Does one planting rule hold in month m, given long-term NASA averages?
+function ruleFits(rule, clim, m) {
+  var t = clim.tavg, here = t[m], before = t[(m + 11) % 12];
+  if (rule.kind === "warm") {
+    if (here < rule.minT) return false;
+    for (var k = 1; k < rule.months; k++) { if (t[(m + k) % 12] < rule.growT) return false; }
+    return true;
+  }
+  if (rule.kind === "spring") return here >= rule.minT && here <= rule.maxT && here > before;
+  if (rule.kind === "fall") return here >= rule.minT && here <= rule.maxT && here < before;
+  if (rule.kind === "lateSummer") return here >= rule.minT && here < before && t[(m + 1) % 12] >= 50 && t[(m + 2) % 12] >= 50;
+  return false;
+}
+
+function cropById(id) { return CROPS.filter(function (c) { return c.id === id; })[0]; }
+
+// What following one crop with another does. Returns [mark, sentence].
+function rotation(lastId, nextId) {
+  var last = cropById(lastId).name, lastLow = last.toLowerCase();
+  var heavy = { corn: 1, sorghum: 1 }, grain = { corn: 1, sorghum: 1, wheat: 1 }, cover = { rye: 1, radish: 1 };
+  if (lastId === nextId) return ["cost", SAME_CROP[nextId] || "Planting the same crop again lets its pests and diseases carry over."];
+  if (lastId === "corn" && nextId === "wheat") return ["cost", "Head scab survives on corn stalks and can infect the wheat."];
+  if (lastId === "rye" && heavy[nextId]) return ["cost", "Rye residue ties up nitrogen as it breaks down, which can slow early growth."];
+  if (lastId === "rye" && nextId === "wheat") return ["cost", "Leftover rye can come up in the wheat and is hard to separate."];
+  if (lastId === "rye" && nextId === "soy") return ["good", "Soybean does well after rye. The residue shades out weeds and protects the soil."];
+  if (lastId === "radish") return ["good", "Root channels left by radish help water soak in and let new roots go deeper."];
+  if (cover[nextId]) return ["good", "Catches nitrogen left after " + lastLow + " and keeps the soil covered."];
+  if (LEGUME[lastId] && !LEGUME[nextId]) return ["good", last + " left " + LEGUME[lastId] + " nitrogen in the soil, so this crop needs less fertilizer."];
+  if (LEGUME[lastId] && LEGUME[nextId]) return ["same", "This crop makes its own nitrogen, so the nitrogen " + lastLow + " left behind goes unused."];
+  if (grain[lastId] && LEGUME[nextId]) return ["good", "Breaks the pest cycle of " + lastLow + " and starts replacing the nitrogen it used."];
+  if (heavy[lastId] && heavy[nextId]) return ["cost", "Two heavy feeders in a row draw soil nitrogen down."];
+  return ["same", "A different crop family, so few pests carry over from " + lastLow + "."];
+}
+
+// The full picture for one crop: last crop, soil, weather and water.
+// rec comes from recommend(); soilNow is today's root-zone moisture or null.
+function analyse(rec, lastId, clim, soilNow, place) {
+  var id = rec.crop.id, m0 = rec.firstMonth;
+  // a late-summer seeding only has to establish before winter
+  var g = rec.kind === "lateSummer" ? { months: 3, need: 6 } : GROW[id];
+  var win = []; for (var k = 0; k < g.months; k++) win.push((m0 + k) % 12);
+  var first = MONTH_FULL[m0], end = MONTH_FULL[win[win.length - 1]];
+  var temps = win.map(function (m) { return clim.tavg[m]; });
+  var lo = round(Math.min.apply(null, temps)), hi = round(Math.max.apply(null, temps));
+
+  var weather;
+  if (rec.kind === "warm") {
+    var frosty = win.filter(function (m) { return clim.tmin[m] !== null && clim.tmin[m] <= 36; });
+    weather = frosty.length ?
+      ["cost", "Grows " + first + " to " + end + ". Monthly averages run from " + lo + " to " + hi + " °F, and frost is possible in " + MONTH_FULL[frosty[0]] + "."] :
+      ["good", "Grows " + first + " to " + end + ". Monthly averages run from " + lo + " to " + hi + " °F, with no frost expected."];
+  } else if (rec.kind === "fall") {
+    var nights = win.map(function (m) { return clim.tmin[m]; }).filter(function (v) { return v !== null; });
+    weather = ["good", "Grows " + first + " to " + end + ", through winter." + (nights.length ? " Nights average " + round(Math.min.apply(null, nights)) + " °F in the coldest month, which this crop survives." : "")];
+  } else if (rec.kind === "lateSummer" && id === "radish") {
+    weather = ["good", "Grows " + first + " to " + end + " while months still average " + lo + " °F or more. Winter cold then kills it, as expected for this crop."];
+  } else if (rec.kind === "lateSummer") {
+    weather = ["good", "Seeded in " + first + ", it has about two months to establish before winter and regrows in spring."];
+  } else {
+    weather = ["good", "Grows from " + first + ". Monthly averages run from " + lo + " to " + hi + " °F in the first season, and young plants tolerate light frost."];
+  }
+
+  var rain = sum(win.map(function (m) { return clim.rain[m]; })), share = round(rain) / g.need;
+  var water = share >= 1 ?
+      ["good", "Rain averages " + round(rain) + " inches over the growing months, enough for the roughly " + g.need + " inches this crop uses."] :
+    share >= 0.75 ?
+      ["same", "Rain averages " + round(rain) + " inches over the growing months, against roughly " + g.need + " inches needed. The rest comes from water stored in the soil."] :
+      ["cost", "Rain averages only " + round(rain) + " inches over the growing months, against roughly " + g.need + " inches needed. Expect water stress in dry years."];
+  if (soilNow) water[1] += " Soil moisture today is " + soilNow.pct + "%" + (soilNow.tag ? ", " + soilNow.tag.toLowerCase() + "." : ".");
+
+  var rot = rotation(lastId, id);
+  return [
+    ["Last crop", rot[0], rot[1]],
+    ["Soil", SOIL_OUTCOME[id][0], place.soilType + ". " + SOIL_OUTCOME[id][1]],
+    ["Weather", weather[0], weather[1]],
+    ["Water", water[0], water[1]]
+  ];
+}
+
+function listWords(a) {
+  if (a.length < 2) return a.join("");
+  return a.slice(0, -1).join(", ") + " or " + a[a.length - 1];
+}
+
+// Crops that can be planted in a season, each with the months that fit and the reason.
+function recommend(clim, season) {
+  var out = [];
+  CROPS.forEach(function (crop) {
+    var months = [], why = "", kind = "";
+    season.months.forEach(function (m) {
+      var rule = PLANTING[crop.id].filter(function (r) { return ruleFits(r, clim, m); })[0];
+      if (!rule) return;
+      months.push(m);
+      if (why) return;
+      kind = rule.kind;
+      var temp = MONTH_FULL[m] + " averages " + round(clim.tavg[m]) + " °F";
+      why = rule.kind === "warm" ? temp + ", with " + (rule.months - 1) + " warm months to follow." :
+            rule.kind === "spring" ? temp + " and is warming, which suits early seeding." :
+            rule.kind === "fall" ? temp + " and is cooling, right for a crop that grows through winter." :
+            temp + ", leaving about two months of growth before hard cold.";
+    });
+    if (months.length) out.push({ crop: crop, firstMonth: months[0], kind: kind, when: "Plant in " + listWords(months.map(function (m) { return MONTH_FULL[m]; })), why: why });
+  });
+  return out;
+}
+
+// Seed needed for a plot. Returns text such as "About 68,000 seeds".
+function seedNeeded(cropId, size, unit) {
+  var s = SEEDING[cropId];
+  var acres = unit === "sqft" ? size / 43560 : size;
+  var n = s.rate * acres;
+  var text;
+  if (s.unit === "seeds") {
+    var r = n >= 100000 ? Math.round(n / 1000) * 1000 : n >= 1000 ? Math.round(n / 100) * 100 : Math.max(1, Math.round(n));
+    text = "About " + r.toLocaleString("en-US") + " seeds";
+  } else if (n >= 10) {
+    text = "About " + Math.round(n).toLocaleString("en-US") + " pounds of seed";
+  } else if (n >= 1) {
+    text = "About " + one(n) + " pounds of seed";
+  } else {
+    text = "About " + one(Math.max(0.1, n * 16)) + " ounces of seed";
+  }
+  return { text: text, how: s.how, basis: s.rate.toLocaleString("en-US") + " " + s.unit + " per acre" };
+}
+
+/* ---------- Network ---------- */
+function getJSON(url) {
+  var ctrl = new AbortController();
+  var timer = setTimeout(function () { ctrl.abort(); }, 30000);
+  return fetch(url, { signal: ctrl.signal }).then(function (res) {
+    clearTimeout(timer);
+    if (!res.ok) throw new Error("NASA POWER answered with an error (" + res.status + "). Please try again in a moment.");
+    return res.json();
+  }, function () {
+    clearTimeout(timer);
+    throw new Error("Could not reach NASA POWER. Check your internet connection. If you are looking at a preview, download the file and open it in your browser.");
+  });
+}
+function ymd(d) { return "" + d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2); }
+function powerQuery(place) {
+  return "parameters=" + POWER_PARAMS.join(",") + "&community=AG&format=JSON&latitude=" + place.lat + "&longitude=" + place.lon;
+}
+function fetchClimatology(place) {
+  return getJSON(POWER + "climatology/point?" + powerQuery(place)).then(parseClimatology);
+}
+function fetchDaily(place, today) {
+  var start = new Date(today.getTime() - 60 * 86400000);
+  return getJSON(POWER + "daily/point?" + powerQuery(place) + "&start=" + ymd(start) + "&end=" + ymd(today)).then(parseDaily);
+}
+
+/* ---------- Page ---------- */
+function groupHTML(g) {
+  var tag = g.tag ? '<span class="tag ' + g.tag[0] + '">' + g.tag[1] + '</span>' : '';
+  var rows = g.rows.map(function (r) { return '<div><dt>' + r[0] + '</dt><dd>' + r[1] + '</dd></div>'; }).join("");
+  return '<div class="group"><div class="group-top"><h3>' + g.title + '</h3>' + tag + '</div><dl>' + rows + '</dl>' +
+         (g.desc ? '<p class="desc">' + g.desc + '</p>' : '') + '</div>';
+}
+
+function init() {
+  var $ = function (id) { return document.getElementById(id); };
+  var statusEl = $("status"), dialog = $("crop-dialog");
+  var state = { clim: null, soilNow: null, sown: null, last: null, season: null, recs: [] };
+  var MARK_WORD = { good: "Good", same: "OK", cost: "Risk" };
+
+  function setStatus(msg, isError) {
+    statusEl.textContent = msg || "";
+    statusEl.className = "status" + (isError ? " error" : "");
+  }
+
+  // crop buttons
+  $("crops").innerHTML = CROPS.map(function (c) {
+    return '<button class="crop" type="button" data-crop="' + c.id + '">' + icon(c.id) + '<b>' + c.name + '</b><small>' + c.type + '</small></button>';
+  }).join("");
+  $("crops").addEventListener("click", function (ev) {
+    var btn = ev.target.closest("[data-crop]");
+    if (!btn) return;
+    var c = CROPS.filter(function (x) { return x.id === btn.getAttribute("data-crop"); })[0];
+    $("dlg-icon").innerHTML = icon(c.id);
+    $("dlg-type").textContent = c.type;
+    $("dlg-title").textContent = c.name;
+    $("dlg-summary").textContent = c.summary;
+    $("dlg-effects").innerHTML = c.effects.map(function (e) {
+      return '<li><span class="what">' + e[0] + '</span><span class="how"><span class="mark ' + e[1] + '">' + e[2] + '</span>' + e[3] + '</span></li>';
+    }).join("");
+    if (dialog.showModal) dialog.showModal(); else dialog.setAttribute("open", "");
+  });
+  function closeDialog() { if (dialog.close) dialog.close(); else dialog.removeAttribute("open"); }
+  $("dlg-close").addEventListener("click", closeDialog);
+  dialog.addEventListener("click", function (ev) { if (ev.target === dialog) closeDialog(); });
+
+  // location form
+  $("location-form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    if (!PLACE.match.test($("place").value)) {
+      setStatus("Bhu Cycle covers Lincoln, Illinois for now. More places are coming.", true);
+      return;
+    }
+    var today = new Date();
+    $("go-btn").disabled = true;
+    setStatus("Reading NASA data for " + PLACE.name + "…");
+
+    var days = null, clim = null, firstError = null;
+    function settle(p, save) { return p.then(save, function (e) { firstError = firstError || e; }); }
+    Promise.all([
+      settle(fetchDaily(PLACE, today), function (v) { days = v; }),
+      settle(fetchClimatology(PLACE), function (v) { clim = v; })
+    ]).then(function () {
+      if (!days && !clim) throw firstError;
+      var c = buildConditions(days, clim, today, PLACE);
+      state.clim = clim;
+      state.soilNow = c.soilNow;
+      $("place-name").textContent = PLACE.name;
+      $("place-sub").textContent = c.sub;
+      $("groups").innerHTML = c.groups.map(groupHTML).join("");
+      setStatus("");
+      $("screen-location").hidden = true;
+      $("screen-conditions").hidden = false;
+      window.scrollTo(0, 0);
+    }).catch(function (e) {
+      setStatus(e.message, true);
+    }).then(function () { $("go-btn").disabled = false; });
+  });
+
+  // planning screen
+  $("last-crops").innerHTML = CROPS.map(function (c) {
+    return '<button class="crop" type="button" aria-pressed="false" data-last="' + c.id + '">' + icon(c.id) + '<b>' + c.name + '</b><small>' + c.type + '</small></button>';
+  }).join("");
+  function seasonButtons(attr) {
+    return SEASONS.map(function (se) {
+      var span = MONTH_NAMES[se.months[0]] + " to " + MONTH_NAMES[se.months[2]];
+      return '<button class="season" type="button" aria-pressed="false" ' + attr + '="' + se.id + '"><b>' + se.name + '</b><small>' + span + '</small></button>';
+    }).join("");
+  }
+  $("sown-seasons").innerHTML = seasonButtons("data-sown");
+  $("seasons").innerHTML = seasonButtons("data-season");
+
+  function showSeeds() {
+    var size = parseFloat($("plot-size").value), unit = $("plot-unit").value;
+    if (!(size > 0) || !state.recs.length) { $("seed-section").hidden = true; return; }
+    var label = size.toLocaleString("en-US") + " " + (unit === "sqft" ? "square feet" : size === 1 ? "acre" : "acres");
+    $("seed-title").textContent = "Seed needed for " + label;
+    $("seed-list").innerHTML = state.recs.map(function (r) {
+      var s = seedNeeded(r.crop.id, size, unit);
+      return '<li>' + icon(r.crop.id) + '<div><b>' + r.crop.name + '</b><div class="amount">' + s.text + '</div><p>' + s.how + ' Based on ' + s.basis + '.</p></div></li>';
+    }).join("");
+    $("seed-section").hidden = false;
+  }
+
+  function press(container, attr, id) {
+    Array.prototype.forEach.call(container.children, function (b) {
+      b.setAttribute("aria-pressed", b.getAttribute(attr) === id ? "true" : "false");
+    });
+  }
+
+  // Rebuilds the recommendations from the last crop and the season.
+  function showRecs() {
+    if (!state.last || !state.season) return;
+    var se = state.season, lastName = cropById(state.last).name.toLowerCase();
+    $("recs-section").hidden = false;
+    if (!state.clim) {
+      state.recs = [];
+      $("recs-title").textContent = "Recommendations are not available";
+      $("recs-sub").textContent = "The long-term NASA data did not load. Go back and try again.";
+      $("recs").innerHTML = "";
+    } else {
+      var order = { good: 0, same: 1, cost: 2 };
+      state.recs = recommend(state.clim, se).map(function (r) { r.rot = rotation(state.last, r.crop.id); return r; })
+        .sort(function (a, b) { return order[a.rot[0]] - order[b.rot[0]]; });
+      $("recs-title").textContent = "Crops to plant in " + se.name.toLowerCase() + " after " + lastName;
+      $("recs-sub").textContent = state.recs.length ?
+        "Matched to NASA temperature averages for " + PLACE.name + " and ordered by how well each follows " + lastName + ". Tap a crop to see what happens if you plant it." :
+        "None of the crops in Bhu Cycle are planted in " + se.name.toLowerCase() + " here.";
+      var label = { good: "Good after " + lastName, same: "Fine after " + lastName, cost: "Risky after " + lastName };
+      $("recs").innerHTML = state.recs.map(function (r) {
+        return '<li><button class="pick" type="button" data-pick="' + r.crop.id + '">' + icon(r.crop.id) +
+               '<span class="body"><b>' + r.crop.name + '</b> <span class="when">' + r.when + '</span><p>' + r.why + '</p></span>' +
+               '<span class="tag ' + r.rot[0] + '">' + label[r.rot[0]] + '</span></button></li>';
+      }).join("");
+    }
+    $("plot-section").hidden = !state.recs.length;
+    showSeeds();
+  }
+
+  $("sown-seasons").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-sown]");
+    if (!b) return;
+    var id = b.getAttribute("data-sown");
+    state.sown = SEASONS.filter(function (x) { return x.id === id; })[0];
+    press($("sown-seasons"), "data-sown", id);
+    $("last-section").hidden = false;
+  });
+  $("last-crops").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-last]");
+    if (!b) return;
+    state.last = b.getAttribute("data-last");
+    press($("last-crops"), "data-last", state.last);
+    $("season-section").hidden = false;
+    showRecs();
+  });
+  $("seasons").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-season]");
+    if (!b) return;
+    var id = b.getAttribute("data-season");
+    state.season = SEASONS.filter(function (x) { return x.id === id; })[0];
+    press($("seasons"), "data-season", id);
+    showRecs();
+  });
+
+  // tapping a recommended crop: what happens if you plant it
+  $("recs").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-pick]");
+    if (!b) return;
+    var rec = state.recs.filter(function (r) { return r.crop.id === b.getAttribute("data-pick"); })[0];
+    var rows = analyse(rec, state.last, state.clim, state.soilNow, PLACE);
+    $("dlg-icon").innerHTML = icon(rec.crop.id);
+    $("dlg-type").textContent = "After " + cropById(state.last).name.toLowerCase() + " sown in " + state.sown.name.toLowerCase() + ", planting in " + state.season.name.toLowerCase();
+    $("dlg-title").textContent = "If you plant " + rec.crop.name.toLowerCase();
+    $("dlg-summary").textContent = rec.when + ". This is what Bhu Cycle expects.";
+    $("dlg-effects").innerHTML = rows.map(function (e) {
+      return '<li><span class="what">' + e[0] + '</span><span class="how"><span class="mark ' + e[1] + '">' + MARK_WORD[e[1]] + '</span>' + e[2] + '</span></li>';
+    }).join("");
+    if (dialog.showModal) dialog.showModal(); else dialog.setAttribute("open", "");
+  });
+
+  $("plot-form").addEventListener("submit", function (ev) { ev.preventDefault(); showSeeds(); });
+
+  $("start-btn").addEventListener("click", function () {
+    $("screen-conditions").hidden = true;
+    $("screen-plan").hidden = false;
+    window.scrollTo(0, 0);
+  });
+  $("back-btn").addEventListener("click", function () {
+    $("screen-plan").hidden = true;
+    $("screen-conditions").hidden = false;
+    window.scrollTo(0, 0);
+  });
+
+  $("change-btn").addEventListener("click", function () {
+    $("screen-conditions").hidden = true;
+    $("screen-location").hidden = false;
+    setStatus("");
+    $("place").focus();
+  });
+}
+
+if (typeof document !== "undefined") { init(); }
+if (typeof module !== "undefined") { module.exports = { parseClimatology: parseClimatology, parseDaily: parseDaily, buildConditions: buildConditions, CROPS: CROPS, ICONS: ICONS, PLACE: PLACE, SEASONS: SEASONS, recommend: recommend, seedNeeded: seedNeeded, rotation: rotation, analyse: analyse }; }
+</script>
+</body>
+</html>
