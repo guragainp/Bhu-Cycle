@@ -186,6 +186,57 @@
   input[type=number] { flex: 1 1 140px; min-width: 0; padding: 14px 16px; font-size: 18px; background: #fff; border: 1.5px solid var(--clay); border-radius: 10px; }
   .plot { max-width: 560px; }
 
+  /* connect button */
+  button.connect { width: 100%; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+  button.connect:hover { border-color: var(--terracotta); background: #fff; }
+  .connect .go { margin-left: auto; flex: none; font-weight: 700; color: var(--terracotta-dark); white-space: nowrap; }
+
+  /* Screen 4: farmer forum */
+  #screen-forum { padding: 40px 0 60px; }
+  .demo-note { margin-top: 14px; font-size: 14px; color: var(--bark); background: var(--paper); border: 1px dashed var(--clay); border-radius: 10px; padding: 10px 14px; }
+  .neighbors { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+  .neighbors .faces { display: flex; }
+  .neighbors .faces .avatar { margin-left: -8px; border: 2px solid var(--parchment); }
+  .neighbors .faces .avatar:first-child { margin-left: 0; }
+  .neighbors p { color: var(--bark); font-size: 15px; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; flex: none; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: #fff; }
+  .forum-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { padding: 7px 14px; border-radius: 999px; border: 1.5px solid var(--clay); background: var(--paper); cursor: pointer; font-size: 15px; font-weight: 500; }
+  .chip:hover { border-color: var(--terracotta); }
+  .chip[aria-pressed="true"] { background: var(--espresso); border-color: var(--espresso); color: #fff; }
+  .threads { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 10px; }
+  .thread { width: 100%; text-align: left; cursor: pointer; display: flex; gap: 14px; align-items: flex-start; background: var(--paper); border: 1.5px solid var(--sand); border-radius: 14px; padding: 16px; }
+  .thread:hover { border-color: var(--terracotta); background: #fff; }
+  .thread .body { flex: 1; min-width: 0; }
+  .thread b { display: block; font-size: 17px; line-height: 1.35; }
+  .thread .excerpt { font-size: 15px; color: var(--bark); margin-top: 4px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .meta { font-size: 14px; color: var(--bark); display: flex; gap: 6px 12px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+  .meta .who { font-weight: 700; color: var(--espresso); }
+  .meta .tag { font-size: 12px; padding: 2px 9px; }
+  .count { white-space: nowrap; }
+  .post { background: var(--paper); border: 1px solid var(--sand); border-radius: 14px; padding: 20px; }
+  .post-head { display: flex; gap: 12px; align-items: center; }
+  .post-head .meta { margin-top: 2px; }
+  .post h2 { font-size: 24px; margin-top: 16px; }
+  .post .text { margin-top: 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .post-foot { margin-top: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .helpful { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--clay); background: #fff; cursor: pointer; font-size: 14px; font-weight: 700; }
+  .helpful:hover { border-color: var(--sage-dark); }
+  .helpful[aria-pressed="true"] { background: #D9E0CC; border-color: var(--sage-dark); color: #3D4A30; }
+  .replies { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
+  .reply { background: #fff; border: 1px solid var(--sand); border-radius: 12px; padding: 16px; margin-left: 22px; }
+  .reply.best { border-color: var(--sage); box-shadow: inset 4px 0 0 var(--sage); }
+  .reply .text { margin-top: 8px; font-size: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .badge { font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; background: #D9E0CC; color: #3D4A30; }
+  .badge.you { background: #EBCDBB; color: #6E3219; }
+  .fform { display: grid; gap: 12px; }
+  .fform input[type=text], .fform select, .fform textarea { width: 100%; padding: 12px 14px; font: inherit; font-size: 17px; background: #fff; border: 1.5px solid var(--clay); border-radius: 10px; color: inherit; }
+  .fform textarea { min-height: 110px; resize: vertical; }
+  .fform .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .fform .actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+  @media (max-width: 520px) { .reply { margin-left: 0; } .thread .avatar { display: none; } }
+
   footer.site { border-top: 1px solid var(--sand); padding: 22px 0 40px; font-size: 14px; color: var(--bark); }
   footer.site a { color: var(--terracotta-dark); }
   [hidden] { display: none !important; }
@@ -241,7 +292,7 @@
     </div>
 
     <div class="section">
-      <div class="card connect">
+      <button class="card connect" type="button" id="forum-btn">
         <svg viewBox="0 0 64 64" aria-hidden="true">
           <circle cx="17" cy="25" r="7" fill="#7D8B6A"/><path d="M5 51c0-9 5-14 12-14s12 5 12 14z" fill="#7D8B6A"/>
           <circle cx="47" cy="25" r="7" fill="#5C6A4C"/><path d="M35 51c0-9 5-14 12-14s12 5 12 14z" fill="#5C6A4C"/>
@@ -249,9 +300,10 @@
         </svg>
         <div>
           <h2>Connect with other farmers nearby</h2>
-          <p>See what your neighbors are farming.</p>
+          <p>Ask questions and see what your neighbors are farming.</p>
         </div>
-      </div>
+        <span class="go" aria-hidden="true">Open forum →</span>
+      </button>
     </div>
 
     <div class="start">
@@ -311,6 +363,60 @@
       <h2 id="seed-title"></h2>
       <p class="sub">Estimates from typical planting rates. Seed labels and local advisers give the exact rate.</p>
       <ul class="recs" id="seed-list"></ul>
+    </div>
+  </section>
+
+  <!-- Screen 4: forum for farmers nearby -->
+  <section id="screen-forum" hidden>
+    <div class="place-head">
+      <div>
+        <p class="eyebrow">Farmers nearby</p>
+        <h1>Farmer forum</h1>
+      </div>
+      <button class="btn quiet" type="button" id="forum-back">Back to conditions</button>
+    </div>
+    <div class="neighbors">
+      <div class="faces" id="faces"></div>
+      <p id="neighbors-text"></p>
+    </div>
+    <p class="demo-note"><strong>Demo:</strong> the farmers and questions here are examples. Anything you post or mark as helpful is saved only in this browser.</p>
+
+    <!-- list of questions -->
+    <div id="forum-list">
+      <div class="section">
+        <div class="forum-bar">
+          <div class="chips" id="topic-chips" role="group" aria-label="Filter by topic"></div>
+          <button class="btn" type="button" id="ask-btn">Ask a question</button>
+        </div>
+        <form class="card fform section" id="ask-form" hidden>
+          <h2>Ask your neighbors</h2>
+          <div class="two">
+            <div><label for="ask-name">Your name</label><input type="text" id="ask-name" maxlength="40" required></div>
+            <div><label for="ask-topic">Topic</label><select id="ask-topic"></select></div>
+          </div>
+          <div><label for="ask-title">Question</label><input type="text" id="ask-title" maxlength="140" placeholder="e.g. When should I plant soybeans after rye?" required></div>
+          <div><label for="ask-body">Details</label><textarea id="ask-body" maxlength="2000" placeholder="Your field, what you've tried, what you're seeing."></textarea></div>
+          <div class="actions">
+            <button class="btn quiet" type="button" id="ask-cancel">Cancel</button>
+            <button class="btn" type="submit">Post question</button>
+          </div>
+        </form>
+        <ul class="threads" id="threads"></ul>
+      </div>
+    </div>
+
+    <!-- one question with its replies -->
+    <div id="forum-thread" hidden>
+      <div class="section">
+        <button class="btn quiet" type="button" id="thread-back">← All questions</button>
+      </div>
+      <div class="section" id="thread-view"></div>
+      <form class="card fform section" id="reply-form">
+        <h2>Write a reply</h2>
+        <div><label for="reply-name">Your name</label><input type="text" id="reply-name" maxlength="40" required></div>
+        <div><label for="reply-body">Your reply</label><textarea id="reply-body" maxlength="2000" required placeholder="Share what has worked on your farm."></textarea></div>
+        <div class="actions"><button class="btn" type="submit">Post reply</button></div>
+      </form>
     </div>
   </section>
 
@@ -500,6 +606,83 @@ var ICONS = {
   sorghum: '<path d="M32 60V30" stroke="#5C6A4C" stroke-width="3" stroke-linecap="round"/><path d="M32 50c-8-1-14-6-17-13M32 44c8-1 14-6 17-13" stroke="#7D8B6A" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="32" cy="19" rx="10" ry="15" fill="#9A4F32"/><g fill="#D9A27E"><circle cx="29" cy="11" r="2"/><circle cx="35" cy="14" r="2"/><circle cx="28" cy="19" r="2"/><circle cx="35" cy="22" r="2"/><circle cx="30" cy="27" r="2"/></g>'
 };
 function icon(id) { return '<svg viewBox="0 0 64 64" aria-hidden="true">' + ICONS[id] + '</svg>'; }
+
+/* ---------- Farmer forum (demo) ----------
+   The people and posts below are made-up examples. Posts written in the page are kept in this browser only. */
+var FORUM_TOPICS = ["Rotation", "Soil", "Cover crops", "Weather", "Seed and planting"];
+var FORUM_KEY = "bhu-forum-v1";
+var DEMO_THREADS = [
+  { id: "t1", author: "Dana R.", place: "Mount Pulaski", miles: 11, topic: "Cover crops", ago: "2 hours ago", helpful: 9,
+    title: "Is it too late to drill cereal rye after soybean harvest?",
+    body: "Just finished beans on the north 80. Is mid-November still worth seeding rye, or will it not get going before winter?",
+    replies: [
+      { id: "t1r1", author: "Marcus T.", place: "Elkhart", miles: 8, ago: "1 hour ago", helpful: 12, best: true,
+        body: "Rye is about the only cover I'd still plant this late. It will barely show this fall, but it greens up early in spring. I bump the rate to about 75 lb an acre when I'm this late." },
+      { id: "t1r2", author: "Priya S.", place: "Lincoln", miles: 2, ago: "40 minutes ago", helpful: 4,
+        body: "Same here. Last year I drilled on November 20 and still had a decent stand by April. Watch the termination timing if corn is next." }
+    ] },
+  { id: "t2", author: "Glen W.", place: "Atlanta", miles: 14, topic: "Rotation", ago: "Yesterday", helpful: 6,
+    title: "Corn on corn again next year, is the yield hit worth it?",
+    body: "Corn prices look better than beans for 2027. I had corn this year. How much yield are folks losing on second-year corn around here?",
+    replies: [
+      { id: "t2r1", author: "Ruth K.", place: "Hartsburg", miles: 9, ago: "Yesterday", helpful: 8,
+        body: "I usually see 10 to 15 bushels less, plus more nitrogen and a rootworm trait. Run the numbers with those costs in before deciding." },
+      { id: "t2r2", author: "Marcus T.", place: "Elkhart", miles: 8, ago: "20 hours ago", helpful: 3,
+        body: "Residue was my biggest headache. Planting into all those stalks in a cold spring cost me emergence." }
+    ] },
+  { id: "t3", author: "Priya S.", place: "Lincoln", miles: 2, topic: "Soil", ago: "3 days ago", helpful: 11,
+    title: "Alfalfa keeps dying in the same low spots every spring",
+    body: "Flat ground, prairie silt loam. The stand looks great going into winter, then the low corners are dead by April. Drainage problem?",
+    replies: [
+      { id: "t3r1", author: "Dana R.", place: "Mount Pulaski", miles: 11, ago: "3 days ago", helpful: 7, best: true,
+        body: "Almost certainly. Alfalfa can't take standing water, and our soils drain slowly. I gave up on tiling the spots and seed a grass mix there instead." },
+      { id: "t3r2", author: "Ruth K.", place: "Hartsburg", miles: 9, ago: "2 days ago", helpful: 2,
+        body: "Check for heaving too. Freeze and thaw pushes the crowns up in wet soil." },
+      { id: "t3r3", author: "Glen W.", place: "Atlanta", miles: 14, ago: "2 days ago", helpful: 1,
+        body: "The county soil and water office helped me map my wet spots for free. Worth a call." }
+    ] },
+  { id: "t4", author: "Ruth K.", place: "Hartsburg", miles: 9, topic: "Weather", ago: "4 days ago", helpful: 5,
+    title: "Dry October. Should I worry about wheat emergence?",
+    body: "Barely any rain since I planted wheat on October 5. Rows are patchy. Anyone else seeing this?",
+    replies: [
+      { id: "t4r1", author: "Priya S.", place: "Lincoln", miles: 2, ago: "4 days ago", helpful: 3,
+        body: "Mine came up uneven too. The seed is fine in dry ground and should catch up with the next good rain." }
+    ] },
+  { id: "t5", author: "Marcus T.", place: "Elkhart", miles: 8, topic: "Cover crops", ago: "1 week ago", helpful: 4,
+    title: "Radish left my soil bare by March. Is that normal?",
+    body: "Tried radish for the first time for compaction. It winter-killed like it should, but the field was open and muddy all of March.",
+    replies: [
+      { id: "t5r1", author: "Dana R.", place: "Mount Pulaski", miles: 11, ago: "6 days ago", helpful: 6,
+        body: "Normal for radish alone. Mix it with rye or oats so something is still covering the ground in spring." }
+    ] },
+  { id: "t6", author: "Glen W.", place: "Atlanta", miles: 14, topic: "Seed and planting", ago: "2 weeks ago", helpful: 3,
+    title: "What seeding rate are you using for soybeans in 15-inch rows?",
+    body: "Thinking about dropping from 140,000 to 120,000. Has anyone around here tried lower rates?",
+    replies: [] }
+];
+
+// Makes text typed by a person safe to place inside HTML.
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
+}
+function initials(name) {
+  var parts = String(name).trim().split(/\s+/);
+  return ((parts[0] || "?")[0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+}
+var AVATAR_COLORS = ["#B05F3A", "#7D8B6A", "#6E8C92", "#8F4A2B", "#5C6A4C", "#9A6B4A"];
+function avatar(name) {
+  var h = 0; for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return '<span class="avatar" style="background:' + AVATAR_COLORS[h % AVATAR_COLORS.length] + '" aria-hidden="true">' + esc(initials(name)) + '</span>';
+}
+function agoFrom(ts, now) {
+  var mins = Math.floor((now - ts) / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return mins + (mins === 1 ? " minute ago" : " minutes ago");
+  var hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + (hrs === 1 ? " hour ago" : " hours ago");
+  var days = Math.floor(hrs / 24);
+  return days === 1 ? "Yesterday" : days + " days ago";
+}
 
 /* ---------- Constants ---------- */
 var MONTH_KEYS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
@@ -991,6 +1174,143 @@ function init() {
     $("screen-plan").hidden = true;
     $("screen-conditions").hidden = false;
     window.scrollTo(0, 0);
+  });
+
+  /* ---------- farmer forum ---------- */
+  var forum = { threads: [], replies: {}, helpful: {}, name: "" }, forumTopic = "All", openId = null;
+  try { var saved = JSON.parse(localStorage.getItem(FORUM_KEY)); if (saved) forum = Object.assign(forum, saved); } catch (e) {}
+  function saveForum() { try { localStorage.setItem(FORUM_KEY, JSON.stringify(forum)); } catch (e) {} }
+
+  function allThreads() { return forum.threads.slice().reverse().concat(DEMO_THREADS); }
+  function threadById(id) { return allThreads().filter(function (t) { return t.id === id; })[0]; }
+  function repliesOf(t) { return (t.replies || []).concat(forum.replies[t.id] || []); }
+  function helpfulCount(item) { return (item.helpful || 0) + (forum.helpful[item.id] ? 1 : 0); }
+  function when(item) { return item.ts ? agoFrom(item.ts, Date.now()) : item.ago; }
+  function whereFrom(item) { return item.mine ? '<span class="badge you">You</span>' : esc(item.place) + ", " + item.miles + " mi away"; }
+  function helpfulBtn(item) {
+    var on = !!forum.helpful[item.id];
+    return '<button class="helpful" type="button" data-helpful="' + item.id + '" aria-pressed="' + on + '">👍 Helpful · ' + helpfulCount(item) + '</button>';
+  }
+
+  // neighbors strip
+  var neighborNames = {};
+  DEMO_THREADS.forEach(function (t) { neighborNames[t.author] = 1; t.replies.forEach(function (r) { neighborNames[r.author] = 1; }); });
+  var names = Object.keys(neighborNames);
+  $("faces").innerHTML = names.map(avatar).join("");
+  $("neighbors-text").textContent = names.length + " farmers within 15 miles of " + PLACE.name + " are talking about their fields.";
+
+  $("topic-chips").innerHTML = ["All"].concat(FORUM_TOPICS).map(function (t) {
+    return '<button class="chip" type="button" data-topic="' + t + '" aria-pressed="' + (t === "All") + '">' + t + '</button>';
+  }).join("");
+  $("ask-topic").innerHTML = FORUM_TOPICS.map(function (t) { return '<option>' + t + '</option>'; }).join("");
+
+  function renderThreads() {
+    var list = allThreads().filter(function (t) { return forumTopic === "All" || t.topic === forumTopic; });
+    $("threads").innerHTML = list.length ? list.map(function (t) {
+      var n = repliesOf(t).length;
+      return '<li><button class="thread" type="button" data-thread="' + t.id + '">' + avatar(t.author) +
+        '<span class="body"><b>' + esc(t.title) + '</b>' + (t.body ? '<span class="excerpt">' + esc(t.body) + '</span>' : '') +
+        '<span class="meta"><span class="who">' + esc(t.author) + '</span><span>' + whereFrom(t) + '</span><span>' + when(t) + '</span>' +
+        '<span class="tag">' + esc(t.topic) + '</span><span class="count">💬 ' + n + (n === 1 ? ' reply' : ' replies') + '</span>' +
+        '<span class="count">👍 ' + helpfulCount(t) + '</span></span></span></button></li>';
+    }).join("") : '<li class="empty">No questions on this topic yet. Be the first to ask.</li>';
+  }
+
+  function renderThread() {
+    var t = threadById(openId);
+    if (!t) return;
+    var reps = repliesOf(t);
+    var head = function (item) {
+      return '<div class="post-head">' + avatar(item.author) + '<div><div class="meta"><span class="who">' + esc(item.author) + '</span>' +
+        (item.best ? '<span class="badge">Most helpful</span>' : '') + '</div><div class="meta"><span>' + whereFrom(item) + '</span><span>' + when(item) + '</span></div></div></div>';
+    };
+    $("thread-view").innerHTML =
+      '<article class="post">' + head(t) + '<h2>' + esc(t.title) + '</h2>' + (t.body ? '<p class="text">' + esc(t.body) + '</p>' : '') +
+      '<div class="post-foot"><span class="tag">' + esc(t.topic) + '</span>' + helpfulBtn(t) + '</div></article>' +
+      '<h2 class="section" style="font-size:20px">' + (reps.length ? reps.length + (reps.length === 1 ? " reply" : " replies") : "No replies yet") + '</h2>' +
+      '<ul class="replies">' + reps.map(function (r) {
+        return '<li class="reply' + (r.best ? ' best' : '') + '">' + head(r) + '<p class="text">' + esc(r.body) + '</p><div class="post-foot">' + helpfulBtn(r) + '</div></li>';
+      }).join("") + '</ul>';
+  }
+
+  function showForumList() {
+    openId = null;
+    $("forum-thread").hidden = true;
+    $("forum-list").hidden = false;
+    renderThreads();
+  }
+  function openThread(id) {
+    openId = id;
+    $("forum-list").hidden = true;
+    $("forum-thread").hidden = false;
+    $("reply-name").value = forum.name || "";
+    $("reply-body").value = "";
+    renderThread();
+    window.scrollTo(0, 0);
+  }
+
+  $("forum-btn").addEventListener("click", function () {
+    $("screen-conditions").hidden = true;
+    $("screen-forum").hidden = false;
+    showForumList();
+    window.scrollTo(0, 0);
+  });
+  $("forum-back").addEventListener("click", function () {
+    $("screen-forum").hidden = true;
+    $("screen-conditions").hidden = false;
+    window.scrollTo(0, 0);
+  });
+  $("thread-back").addEventListener("click", showForumList);
+
+  $("topic-chips").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-topic]");
+    if (!b) return;
+    forumTopic = b.getAttribute("data-topic");
+    press($("topic-chips"), "data-topic", forumTopic);
+    renderThreads();
+  });
+  $("threads").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-thread]");
+    if (b) openThread(b.getAttribute("data-thread"));
+  });
+  $("thread-view").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-helpful]");
+    if (!b) return;
+    var id = b.getAttribute("data-helpful");
+    if (forum.helpful[id]) delete forum.helpful[id]; else forum.helpful[id] = true;
+    saveForum();
+    renderThread();
+  });
+
+  $("ask-btn").addEventListener("click", function () {
+    $("ask-form").hidden = false;
+    $("ask-name").value = forum.name || "";
+    if (forumTopic !== "All") $("ask-topic").value = forumTopic;
+    $(forum.name ? "ask-title" : "ask-name").focus();
+  });
+  $("ask-cancel").addEventListener("click", function () { $("ask-form").hidden = true; });
+  $("ask-form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var name = $("ask-name").value.trim(), title = $("ask-title").value.trim();
+    if (!name || !title) return;
+    forum.name = name;
+    var t = { id: "u" + Date.now(), author: name, mine: true, topic: $("ask-topic").value, ts: Date.now(), helpful: 0,
+              title: title, body: $("ask-body").value.trim(), replies: [] };
+    forum.threads.push(t);
+    saveForum();
+    $("ask-form").reset();
+    $("ask-form").hidden = true;
+    openThread(t.id);
+  });
+  $("reply-form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var name = $("reply-name").value.trim(), body = $("reply-body").value.trim();
+    if (!name || !body || !openId) return;
+    forum.name = name;
+    (forum.replies[openId] = forum.replies[openId] || []).push({ id: "r" + Date.now(), author: name, mine: true, ts: Date.now(), helpful: 0, body: body });
+    saveForum();
+    $("reply-body").value = "";
+    renderThread();
   });
 
   $("change-btn").addEventListener("click", function () {
