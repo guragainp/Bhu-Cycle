@@ -12,7 +12,7 @@ Built for the 2026 NASA Space Apps Challenge, *Field Shift: Adapting Farms with 
 2. **Crop effects.** Tap a crop to see what it does to the soil: nitrogen, organic matter, cover, structure and water.
 3. **Plan your next crop.** Pick your last crop and when you want to plant. Bhu Cycle recommends crops that fit the local temperature record, ranks them by how well they follow the last crop, and explains the expected effect on soil, weather and water.
 4. **Seed estimate.** Enter your plot size to see roughly how much seed each recommended crop needs.
-5. **Farmer forum (demo).** Tap "Connect with other farmers nearby" to browse questions from neighbors, filter by topic, ask your own question, reply, and mark answers as helpful. The farmers and posts are examples, and anything you post is saved only in your browser.
+5. **Connect with farmers nearby and knowledge share (demo).** Tap "Connect with farmers nearby and knowledge share" to browse questions from neighbors, filter by topic, ask your own question, reply, and mark answers as helpful. The farmers and posts are examples, and anything you post is saved only in your browser.
 
 ## Data sources
 

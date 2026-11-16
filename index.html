@@ -191,7 +191,7 @@
   button.connect:hover { border-color: var(--terracotta); background: #fff; }
   .connect .go { margin-left: auto; flex: none; font-weight: 700; color: var(--terracotta-dark); white-space: nowrap; }
 
-  /* Screen 4: farmer forum */
+  /* Screen 4: connect with farmers nearby */
   #screen-forum { padding: 40px 0 60px; }
   .demo-note { margin-top: 14px; font-size: 14px; color: var(--bark); background: var(--paper); border: 1px dashed var(--clay); border-radius: 10px; padding: 10px 14px; }
   .neighbors { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
@@ -299,10 +299,10 @@
           <circle cx="32" cy="21" r="9" fill="#B05F3A" stroke="#FBF6EC" stroke-width="2.5"/><path d="M16 56c0-12 6-18 16-18s16 6 16 18z" fill="#B05F3A" stroke="#FBF6EC" stroke-width="2.5" stroke-linejoin="round"/>
         </svg>
         <div>
-          <h2>Connect with other farmers nearby</h2>
+          <h2>Connect with farmers nearby and knowledge share</h2>
           <p>Ask questions and see what your neighbors are farming.</p>
         </div>
-        <span class="go" aria-hidden="true">Open forum →</span>
+        <span class="go" aria-hidden="true">Join in →</span>
       </button>
     </div>
 
@@ -366,12 +366,12 @@
     </div>
   </section>
 
-  <!-- Screen 4: forum for farmers nearby -->
+  <!-- Screen 4: connect with farmers nearby and knowledge share -->
   <section id="screen-forum" hidden>
     <div class="place-head">
       <div>
-        <p class="eyebrow">Farmers nearby</p>
-        <h1>Farmer forum</h1>
+        <p class="eyebrow">Knowledge share</p>
+        <h1>Connect with farmers nearby</h1>
       </div>
       <button class="btn quiet" type="button" id="forum-back">Back to conditions</button>
     </div>
@@ -607,7 +607,7 @@ var ICONS = {
 };
 function icon(id) { return '<svg viewBox="0 0 64 64" aria-hidden="true">' + ICONS[id] + '</svg>'; }
 
-/* ---------- Farmer forum (demo) ----------
+/* ---------- Connect with farmers nearby and knowledge share (demo) ----------
    The people and posts below are made-up examples. Posts written in the page are kept in this browser only. */
 var FORUM_TOPICS = ["Rotation", "Soil", "Cover crops", "Weather", "Seed and planting"];
 var FORUM_KEY = "bhu-forum-v1";
@@ -1176,7 +1176,7 @@ function init() {
     window.scrollTo(0, 0);
   });
 
-  /* ---------- farmer forum ---------- */
+  /* ---------- connect with farmers nearby ---------- */
   var forum = { threads: [], replies: {}, helpful: {}, name: "" }, forumTopic = "All", openId = null;
   try { var saved = JSON.parse(localStorage.getItem(FORUM_KEY)); if (saved) forum = Object.assign(forum, saved); } catch (e) {}
   function saveForum() { try { localStorage.setItem(FORUM_KEY, JSON.stringify(forum)); } catch (e) {} }
