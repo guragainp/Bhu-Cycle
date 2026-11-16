@@ -191,6 +191,27 @@
   button.connect:hover { border-color: var(--terracotta); background: #fff; }
   .connect .go { margin-left: auto; flex: none; font-weight: 700; color: var(--terracotta-dark); white-space: nowrap; }
 
+  .tiles { display: grid; gap: 14px; }
+  .connect > div { flex: 1 1 0; min-width: 0; }
+  .demo-note a { color: var(--terracotta-dark); }
+  @media (max-width: 560px) { .connect { flex-wrap: wrap; align-items: flex-start; } .connect svg { width: 48px; height: 48px; } .connect .go { flex-basis: 100%; margin-left: 66px; } }
+
+  /* Screen 5: home remedies */
+  #screen-remedies { padding: 40px 0 60px; }
+  #screen-remedies .lede { max-width: 60ch; }
+  .callout { background: #EEF1E6; border-color: #C9D3B6; }
+  .callout h2 { font-size: 20px; margin-bottom: 6px; }
+  .remedy-group h2 { font-size: 22px; margin-bottom: 4px; }
+  .remedies { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 14px; margin-top: 14px; }
+  .remedy { background: var(--paper); border: 1px solid var(--sand); border-radius: 14px; padding: 20px; }
+  .remedy h3 { font-size: 19px; }
+  .remedy .kind { display: inline-block; margin-top: 6px; }
+  .remedy .works { margin-top: 10px; font-size: 15px; }
+  .remedy .works b { color: var(--sage-dark); }
+  .remedy h4 { margin: 14px 0 4px; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--terracotta-dark); }
+  .remedy ul { margin: 0; padding-left: 20px; font-size: 15px; display: grid; gap: 4px; }
+  .remedy .warn { margin-top: 12px; font-size: 14px; background: #F6E3D8; color: #6E3219; border-radius: 8px; padding: 8px 10px; }
+
   /* Screen 4: connect with farmers nearby */
   #screen-forum { padding: 40px 0 60px; }
   .demo-note { margin-top: 14px; font-size: 14px; color: var(--bark); background: var(--paper); border: 1px dashed var(--clay); border-radius: 10px; padding: 10px 14px; }
@@ -291,7 +312,7 @@
       <div class="crops" id="crops"></div>
     </div>
 
-    <div class="section">
+    <div class="section tiles">
       <button class="card connect" type="button" id="forum-btn">
         <svg viewBox="0 0 64 64" aria-hidden="true">
           <circle cx="17" cy="25" r="7" fill="#7D8B6A"/><path d="M5 51c0-9 5-14 12-14s12 5 12 14z" fill="#7D8B6A"/>
@@ -303,6 +324,18 @@
           <p>Ask questions and see what your neighbors are farming.</p>
         </div>
         <span class="go" aria-hidden="true">Join in →</span>
+      </button>
+      <button class="card connect" type="button" id="remedies-btn">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M10 54C10 30 26 12 54 10c-1 28-18 44-44 44z" fill="#7D8B6A"/><path d="M14 50C24 38 34 28 46 18" stroke="#D9E0CC" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <ellipse cx="44" cy="44" rx="9" ry="11" fill="#B05F3A" stroke="#FBF6EC" stroke-width="2.5"/><path d="M44 33v22" stroke="#8F4A2B" stroke-width="2"/><circle cx="44" cy="31" r="4.5" fill="#3A2E25"/>
+          <path d="M35 40l-5-3M35 47l-5 1M53 40l5-3M53 47l5 1M41 28l-3-5M47 28l3-5" stroke="#3A2E25" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <h2>Home remedies for common pests</h2>
+          <p>Natural alternatives to chemical insecticides.</p>
+        </div>
+        <span class="go" aria-hidden="true">See remedies →</span>
       </button>
     </div>
 
@@ -364,6 +397,27 @@
       <p class="sub">Estimates from typical planting rates. Seed labels and local advisers give the exact rate.</p>
       <ul class="recs" id="seed-list"></ul>
     </div>
+  </section>
+
+  <!-- Screen 5: home remedies for common pests -->
+  <section id="screen-remedies" hidden>
+    <div class="place-head">
+      <div>
+        <p class="eyebrow">Natural pest control</p>
+        <h1>Home remedies for common pests</h1>
+      </div>
+      <button class="btn quiet" type="button" id="remedies-back">Back to conditions</button>
+    </div>
+    <p class="lede">Bhu Cycle also includes home remedies for common pest problems, offering farmers a natural alternative to chemical insecticides.</p>
+    <div class="card callout section">
+      <h2>Need to take more drastic pest management measures?</h2>
+      <p>Do so naturally, without turning to harsh chemicals. These alternatives deter pests without harming your health or the health of the ecosystem.</p>
+    </div>
+    <div class="section">
+      <div class="chips" id="remedy-chips" role="group" aria-label="Show remedies for"></div>
+    </div>
+    <div id="remedy-groups"></div>
+    <p class="demo-note section">Test any spray on a few leaves first and wait a day before treating a whole plant. Source for home remedies: <a href="https://www.gardenguides.com/81346-use-peppermint-oil-pest-control.html">Garden Guides</a>.</p>
   </section>
 
   <!-- Screen 4: connect with farmers nearby and knowledge share -->
@@ -659,6 +713,68 @@ var DEMO_THREADS = [
     title: "What seeding rate are you using for soybeans in 15-inch rows?",
     body: "Thinking about dropping from 140,000 to 120,000. Has anyone around here tried lower rates?",
     replies: [] }
+];
+
+/* ---------- Home remedies for common pests ----------
+   Each remedy: name, kind (Kills / Repels), what it works on, how to make it, how to use it, and a caution if any. */
+var REMEDY_GROUPS = [
+  { id: "garden", name: "Yard and garden", intro: "Alternative insecticides for the field, yard and garden.", remedies: [
+    { name: "Diatomaceous earth", kind: "Kills",
+      works: "Crawling pests such as snails and slugs.",
+      make: ["Buy powdered diatomaceous earth at a garden center."],
+      use: ["Dust the ground around plants.", "You can also sprinkle it directly on affected leaves.", "Reapply after rain or heavy watering."] },
+    { name: "Neem oil spray", kind: "Kills",
+      works: "Many common insect pests at any stage (egg, larva or adult), plus powdery mildew and other fungal infections.",
+      make: ["Mix 2 teaspoons neem oil with 1 quart of water.", "Optional: add 1 teaspoon mild liquid soap."],
+      use: ["Spray on affected leaves.", "Spray early in the morning or in the evening."],
+      notes: ["Biodegradable and nontoxic to pets, birds, fish and other wildlife.", "Won't pollute groundwater or runoff, and won't harm bees, butterflies or ladybugs."],
+      warn: "Avoid the heat of the day. Sun and oil together can burn leaves." },
+    { name: "Peppermint, thyme and rosemary oil", kind: "Repels",
+      works: "Flies, fleas, mosquitoes, cabbage loopers, aphids, squash bugs, whiteflies, ants, beetles, spiders, chiggers, ticks and roaches.",
+      make: ["Add about 10 drops each of peppermint, thyme and rosemary essential oil to a spray bottle filled with water."],
+      use: ["Spray around the garden.", "It repels pests but does not kill them."] },
+    { name: "Oil spray", kind: "Kills",
+      works: "Aphids, mites, thrips and similar pests.",
+      make: ["Mix 1 cup vegetable oil with 1 tablespoon liquid soap, such as castile soap.", "Add 2 teaspoons of this mix to 1 quart of water and shake."],
+      use: ["Spray directly on affected plants."],
+      warn: "Avoid spraying during the heat of the day." },
+    { name: "Soap spray", kind: "Kills",
+      works: "Mites, aphids, whiteflies, beetles and similar pests.",
+      make: ["Mix 1½ teaspoons mild liquid soap (castile) with 1 quart of water."],
+      use: ["Spray directly on infested plants.", "Apply early in the morning or in the evening."],
+      warn: "Avoid spraying during the heat of the day." },
+    { name: "Wasp and hornet nest spray", kind: "Kills",
+      works: "Wasp and hornet nests.",
+      make: ["Pour 1 cup of peppermint or tea tree liquid castile soap into a hose-end sprayer."],
+      use: ["Attach the sprayer to a hose and spray directly at the nest until it breaks apart or falls.", "The soap suffocates the insects, and the scent keeps them from rebuilding."],
+      warn: "Keep your distance and spray in the evening, when wasps are less active." }
+  ] },
+  { id: "home", name: "Home and barn", intro: "Peppermint oil keeps many pests away from buildings.", remedies: [
+    { name: "Peppermint spider and ant spray", kind: "Repels",
+      works: "Spiders and ants.",
+      make: ["Mix 5 to 7 drops of peppermint oil and a few drops of dish soap in a spray bottle of warm water.", "Shake well."],
+      use: ["Spray along windows, doors and other places spiders and ants come in."] },
+    { name: "Peppermint mosquito dish", kind: "Repels",
+      works: "Mosquitoes.",
+      make: ["Put a few drops of peppermint oil in a shallow dish of water."],
+      use: ["Set the dish in the room where you want to keep mosquitoes away."] },
+    { name: "Peppermint rodent repellent", kind: "Repels",
+      works: "Mice, rats, squirrels and rabbits.",
+      make: ["Dip cotton balls or rags in peppermint oil."],
+      use: ["Place them inside or outside wherever the problem is."] }
+  ] },
+  { id: "weeds", name: "Weeds", intro: "Vinegar and boiling water kill most weeds, but they can also kill plants you want to keep. Use them on sidewalk cracks, patios and other hard surfaces.", remedies: [
+    { name: "Vinegar spray", kind: "Kills",
+      works: "Most weeds.",
+      make: ["Add a couple of drops of liquid soap to white vinegar so it sticks to the plant.", "Optional: add salt to stop weeds from coming back."],
+      use: ["Spray on a dry, sunny day."],
+      warn: "Salt stops all plants from growing. Only add it where you never want anything to grow, such as a walkway." },
+    { name: "Boiling water", kind: "Kills",
+      works: "Most weeds.",
+      make: ["Bring water to a boil."],
+      use: ["Pour it directly on the weeds you want to get rid of."],
+      warn: "Pour carefully. It kills any plant it touches." }
+  ] }
 ];
 
 // Makes text typed by a person safe to place inside HTML.
@@ -1172,6 +1288,42 @@ function init() {
   });
   $("back-btn").addEventListener("click", function () {
     $("screen-plan").hidden = true;
+    $("screen-conditions").hidden = false;
+    window.scrollTo(0, 0);
+  });
+
+  /* ---------- home remedies for common pests ---------- */
+  function li(a) { return a.map(function (s) { return '<li>' + s + '</li>'; }).join(""); }
+  function remedyHTML(r) {
+    return '<article class="remedy"><h3>' + r.name + '</h3><span class="tag kind ' + (r.kind === "Kills" ? "cost" : "good") + '">' + r.kind + '</span>' +
+      '<p class="works"><b>Works on:</b> ' + r.works + '</p>' +
+      '<h4>How to make it</h4><ul>' + li(r.make) + '</ul>' +
+      '<h4>How to use it</h4><ul>' + li(r.use) + '</ul>' +
+      (r.notes ? '<h4>Good to know</h4><ul>' + li(r.notes) + '</ul>' : '') +
+      (r.warn ? '<p class="warn">' + r.warn + '</p>' : '') + '</article>';
+  }
+  function renderRemedies(groupId) {
+    $("remedy-groups").innerHTML = REMEDY_GROUPS.filter(function (g) { return groupId === "all" || g.id === groupId; }).map(function (g) {
+      return '<div class="section remedy-group"><h2>' + g.name + '</h2><p class="sub">' + g.intro + '</p><div class="remedies">' + g.remedies.map(remedyHTML).join("") + '</div></div>';
+    }).join("");
+  }
+  $("remedy-chips").innerHTML = [{ id: "all", name: "All" }].concat(REMEDY_GROUPS).map(function (g) {
+    return '<button class="chip" type="button" data-group="' + g.id + '" aria-pressed="' + (g.id === "all") + '">' + g.name + '</button>';
+  }).join("");
+  renderRemedies("all");
+  $("remedy-chips").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-group]");
+    if (!b) return;
+    press($("remedy-chips"), "data-group", b.getAttribute("data-group"));
+    renderRemedies(b.getAttribute("data-group"));
+  });
+  $("remedies-btn").addEventListener("click", function () {
+    $("screen-conditions").hidden = true;
+    $("screen-remedies").hidden = false;
+    window.scrollTo(0, 0);
+  });
+  $("remedies-back").addEventListener("click", function () {
+    $("screen-remedies").hidden = true;
     $("screen-conditions").hidden = false;
     window.scrollTo(0, 0);
   });

@@ -13,11 +13,13 @@ Built for the 2026 NASA Space Apps Challenge, *Field Shift: Adapting Farms with 
 3. **Plan your next crop.** Pick your last crop and when you want to plant. Bhu Cycle recommends crops that fit the local temperature record, ranks them by how well they follow the last crop, and explains the expected effect on soil, weather and water.
 4. **Seed estimate.** Enter your plot size to see roughly how much seed each recommended crop needs.
 5. **Connect with farmers nearby and knowledge share (demo).** Tap "Connect with farmers nearby and knowledge share" to browse questions from neighbors, filter by topic, ask your own question, reply, and mark answers as helpful. The farmers and posts are examples, and anything you post is saved only in your browser.
+6. **Home remedies for common pests.** Natural alternatives to chemical insecticides for the yard and garden, home and barn, and weeds, such as neem oil, diatomaceous earth, soap and oil sprays, peppermint oil repellents, vinegar and boiling water. Each remedy says what it works on, how to make it and how to use it.
 
 ## Data sources
 
 - [NASA POWER](https://power.larc.nasa.gov/) Daily and Climatology APIs: temperature, rainfall, soil wetness (fetched live in the browser)
 - USDA NRCS soil survey of Logan County, Illinois: local soil type
+- [Garden Guides](https://www.gardenguides.com/81346-use-peppermint-oil-pest-control.html): home remedies for pests
 
 ## Running it
 
